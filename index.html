@@ -5,122 +5,686 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QRcraft - QR Code Generator and Scanner</title>
   <link rel="icon" href="icon.png" type="image/png">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --bg: #080c10; --surface: #0f1419; --border: #1e2730; --accent: #00e5a0; --accent2: #00b0ff; --text: #e8edf2; --muted: #5a6a78; --danger: #ff4d6d; }
-    body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
-    body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
-    .blob { position: fixed; border-radius: 50%; filter: blur(120px); opacity: 0.12; pointer-events: none; z-index: 0; }
-    .blob-1 { width: 500px; height: 500px; background: var(--accent); top: -150px; left: -100px; }
-    .blob-2 { width: 400px; height: 400px; background: var(--accent2); bottom: -100px; right: -80px; }
-    nav { position: relative; z-index: 10; width: 100%; display: flex; justify-content: flex-end; padding: 18px 28px; }
-    .yallcode-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: transparent; border: 1px solid var(--border); border-radius: 100px; color: var(--text); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 1.5px; text-decoration: none; transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s; }
-    .yallcode-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,229,160,0.06); box-shadow: 0 0 18px rgba(0,229,160,0.15); }
-    header { position: relative; z-index: 1; text-align: center; padding: 30px 20px 20px; }
-    .logo-tag { font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 14px; opacity: 0; animation: fadeUp 0.6s 0.1s ease forwards; }
-    h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 800; line-height: 1; letter-spacing: -2px; background: linear-gradient(135deg, var(--text) 40%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; opacity: 0; animation: fadeUp 0.6s 0.2s ease forwards; }
-    .subtitle { margin-top: 12px; color: var(--muted); font-size: 1rem; font-weight: 400; opacity: 0; animation: fadeUp 0.6s 0.3s ease forwards; }
-    .tab-bar { position: relative; z-index: 1; display: flex; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 6px; margin-top: 30px; opacity: 0; animation: fadeUp 0.6s 0.35s ease forwards; }
-    .tab-btn { display: flex; align-items: center; gap: 8px; padding: 10px 24px; border: none; border-radius: 11px; background: transparent; color: var(--muted); font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.2s, color 0.2s; }
-    .tab-btn.active { background: var(--accent); color: #000; }
-    .card { position: relative; z-index: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 40px; width: min(680px, calc(100% - 40px)); margin: 30px auto 0; opacity: 0; animation: fadeUp 0.6s 0.4s ease forwards; box-shadow: 0 0 0 1px rgba(0,229,160,0.05), 0 40px 80px rgba(0,0,0,0.5); }
+
+    :root {
+      --bg: #0a0000;
+      --bg2: #110000;
+      --surface: #160303;
+      --surface2: #1e0505;
+      --border: #3a0a0a;
+      --border-bright: #6b1010;
+      --red: #cc1a1a;
+      --red-bright: #e82020;
+      --red-dim: #7a0e0e;
+      --red-glow: rgba(204,26,26,0.25);
+      --text: #f0e0e0;
+      --muted: #6b3030;
+      --danger: #ff3333;
+      --white: #fff5f5;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* Noise texture overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0.5;
+    }
+
+    /* Grid lines */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(204,26,26,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(204,26,26,0.04) 1px, transparent 1px);
+      background-size: 44px 44px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Red glow blobs */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .blob-1 { width: 600px; height: 600px; background: #cc1a1a; top: -200px; left: -150px; }
+    .blob-2 { width: 400px; height: 400px; background: #7a0e0e; bottom: -100px; right: -100px; }
+
+    /* ── NAV ── */
+    nav {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .nav-logo img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border-bright);
+    }
+
+    .nav-logo-text {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.3rem;
+      letter-spacing: 2px;
+      color: var(--red-bright);
+      line-height: 1;
+    }
+
+    .yallcode-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      background: transparent;
+      border: 1px solid var(--border-bright);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .yallcode-btn:hover {
+      border-color: var(--red-bright);
+      color: var(--red-bright);
+      background: rgba(204,26,26,0.08);
+      box-shadow: 0 0 20px rgba(204,26,26,0.2);
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 50px 20px 10px;
+    }
+
+    .logo-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 5px;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.1s ease forwards;
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(3.5rem, 9vw, 7rem);
+      font-weight: 400;
+      line-height: 0.95;
+      letter-spacing: 4px;
+      color: var(--white);
+      text-shadow: 0 0 60px rgba(204,26,26,0.4), 0 2px 0 var(--red-dim);
+      opacity: 0;
+      animation: fadeUp 0.6s 0.2s ease forwards;
+    }
+
+    h1 span { color: var(--red-bright); }
+
+    .subtitle {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.3s ease forwards;
+    }
+
+    /* ── TABS ── */
+    .tab-bar {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 5px;
+      margin-top: 36px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.35s ease forwards;
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 28px;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--red);
+      color: var(--white);
+      box-shadow: 0 0 20px rgba(204,26,26,0.4);
+    }
+
+    /* ── CARD ── */
+    .card {
+      position: relative;
+      z-index: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 36px;
+      width: min(680px, calc(100% - 40px));
+      margin: 28px auto 0;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.4s ease forwards;
+      box-shadow: 0 0 0 1px rgba(204,26,26,0.05), 0 40px 80px rgba(0,0,0,0.7);
+    }
+
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
-    label { display: block; font-size: 11px; font-family: 'Space Mono', monospace; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
-    .input-wrap { position: relative; margin-bottom: 24px; }
-    input[type="text"] { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px 50px 16px 18px; font-family: 'Space Mono', monospace; font-size: 0.9rem; color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
-    input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,160,0.1); }
+
+    label {
+      display: block;
+      font-size: 10px;
+      font-family: 'Share Tech Mono', monospace;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .input-wrap {
+      position: relative;
+      margin-bottom: 22px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 46px 14px 16px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(204,26,26,0.15);
+    }
     input[type="text"]::placeholder { color: var(--muted); }
-    .clear-btn { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px; padding: 4px; transition: color 0.2s; }
-    .clear-btn:hover { color: var(--danger); }
-    .options-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 28px; }
-    select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--text); outline: none; cursor: pointer; transition: border-color 0.2s; appearance: none; }
-    input[type="color"] { width: 100%; height: 46px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 4px 6px; cursor: pointer; }
-    .generate-btn { width: 100%; padding: 18px; background: var(--accent); color: #000; border: none; border-radius: 14px; font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800; letter-spacing: 1px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; text-transform: uppercase; }
-    .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,229,160,0.3); }
-    .error-msg { color: var(--danger); font-family: 'Space Mono', monospace; font-size: 0.75rem; margin-top: -16px; margin-bottom: 16px; display: none; }
-    .qr-section { position: relative; z-index: 1; width: min(360px, calc(100% - 40px)); margin: 30px auto 0; opacity: 0; transition: opacity 0.4s ease; }
+
+    .clear-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 16px;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .clear-btn:hover { color: var(--red-bright); }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    select {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 12px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+    select:focus { border-color: var(--red); }
+
+    input[type="color"] {
+      width: 100%;
+      height: 44px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px 5px;
+      cursor: pointer;
+    }
+
+    .generate-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--red);
+      color: var(--white);
+      border: none;
+      border-radius: 10px;
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.2rem;
+      letter-spacing: 3px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+    }
+    .generate-btn:hover {
+      transform: translateY(-2px);
+      background: var(--red-bright);
+      box-shadow: 0 8px 30px rgba(204,26,26,0.4);
+    }
+    .generate-btn:active { transform: translateY(0); }
+
+    .error-msg {
+      color: var(--danger);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.72rem;
+      margin-top: -14px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* ── QR OUTPUT ── */
+    .qr-section {
+      position: relative;
+      z-index: 1;
+      width: min(360px, calc(100% - 40px));
+      margin: 28px auto 0;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
     .qr-section.visible { opacity: 1; }
-    .qr-frame { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px; text-align: center; box-shadow: 0 0 0 1px rgba(0,229,160,0.05), 0 30px 60px rgba(0,0,0,0.4); }
-    #qr-output { display: flex; justify-content: center; align-items: center; min-height: 200px; }
-    #qr-output canvas, #qr-output img { border-radius: 8px; }
-    .qr-label { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-top: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .download-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 20px; padding: 14px; background: transparent; border: 1px solid var(--accent); border-radius: 12px; color: var(--accent); font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.2s, transform 0.15s; text-decoration: none; }
-    .download-btn:hover { background: rgba(0,229,160,0.08); transform: translateY(-1px); }
-    .empty-state { color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.75rem; padding: 40px 0; }
-    .scan-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
-    .scan-method-btn { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 16px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s; }
-    .scan-method-btn:hover, .scan-method-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(0,176,255,0.05); }
-    .scan-method-btn svg { width: 28px; height: 28px; }
-    .drop-zone { border: 2px dashed var(--border); border-radius: 16px; padding: 40px 20px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; display: none; }
+
+    .qr-frame {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      text-align: center;
+      box-shadow: 0 0 0 1px rgba(204,26,26,0.06), 0 30px 60px rgba(0,0,0,0.6);
+    }
+
+    #qr-output {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
+    }
+    #qr-output canvas, #qr-output img { border-radius: 6px; }
+
+    .qr-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .download-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 18px;
+      padding: 13px;
+      background: transparent;
+      border: 1px solid var(--red);
+      border-radius: 8px;
+      color: var(--red-bright);
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+    .download-btn:hover {
+      background: rgba(204,26,26,0.1);
+      box-shadow: 0 0 16px rgba(204,26,26,0.2);
+    }
+
+    .empty-state {
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem;
+      padding: 40px 0;
+      letter-spacing: 2px;
+    }
+
+    /* ── SCANNER ── */
+    .scan-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .scan-method-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 22px 14px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .scan-method-btn:hover, .scan-method-btn.active {
+      border-color: var(--red);
+      color: var(--red-bright);
+      background: rgba(204,26,26,0.06);
+      box-shadow: 0 0 16px rgba(204,26,26,0.15);
+    }
+    .scan-method-btn svg { width: 26px; height: 26px; }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      display: none;
+    }
     .drop-zone.visible { display: block; }
-    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent2); background: rgba(0,176,255,0.04); }
-    .drop-zone p { font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--muted); margin-top: 10px; }
-    .drop-zone span { color: var(--accent2); text-decoration: underline; cursor: pointer; }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--red);
+      background: rgba(204,26,26,0.05);
+    }
+    .drop-zone p { font-family: 'Share Tech Mono', monospace; font-size: 0.78rem; color: var(--muted); margin-top: 10px; }
+    .drop-zone span { color: var(--red-bright); text-decoration: underline; cursor: pointer; }
     #scan-file-input { display: none; }
-    .camera-wrap { display: none; flex-direction: column; align-items: center; gap: 14px; }
+
+    .camera-wrap { display: none; flex-direction: column; align-items: center; gap: 12px; }
     .camera-wrap.visible { display: flex; }
-    #camera-video { width: 100%; max-width: 360px; border-radius: 14px; border: 1px solid var(--border); background: #000; }
-    .cam-btn { padding: 10px 24px; background: var(--danger); color: #fff; border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
-    .scan-result { margin-top: 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 20px; display: none; }
+    #camera-video { width: 100%; max-width: 360px; border-radius: 10px; border: 1px solid var(--border-bright); background: #000; }
+    .cam-btn { padding: 10px 24px; background: var(--red-dim); color: var(--white); border: 1px solid var(--red); border-radius: 8px; font-family: 'Barlow', sans-serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: background 0.2s; }
+    .cam-btn:hover { background: var(--red); }
+
+    /* ── SCAN RESULT ── */
+    .scan-result {
+      margin-top: 20px;
+      background: var(--bg2);
+      border: 1px solid var(--border-bright);
+      border-radius: 12px;
+      padding: 20px;
+      display: none;
+      animation: fadeUp 0.3s ease forwards;
+    }
     .scan-result.visible { display: block; }
-    .scan-result-tag { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 3px; color: var(--accent2); text-transform: uppercase; margin-bottom: 10px; }
-    .scan-result-text { font-family: 'Space Mono', monospace; font-size: 0.85rem; color: var(--text); word-break: break-all; line-height: 1.6; }
-    .scan-result-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-    .result-action-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Space Mono', monospace; font-size: 11px; cursor: pointer; text-decoration: none; transition: border-color 0.2s, color 0.2s; }
-    .result-action-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-    .scan-error { margin-top: 14px; color: var(--danger); font-family: 'Space Mono', monospace; font-size: 0.78rem; display: none; }
-    footer { position: relative; z-index: 1; text-align: center; padding: 40px 20px 24px; color: var(--muted); font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 2px; }
-    footer a { color: var(--accent); text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,229,160,0.3); } 50% { box-shadow: 0 0 0 8px rgba(0,229,160,0); } }
-    .generating { animation: pulse 0.8s ease; }
-    .copied-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--accent); color: #000; font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 2px; padding: 12px 24px; border-radius: 100px; opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s; z-index: 999; }
+
+    .scan-result-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .scan-check {
+      width: 22px;
+      height: 22px;
+      background: var(--red);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(204,26,26,0.5);
+    }
+    .scan-check svg { width: 12px; height: 12px; }
+
+    .scan-result-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--red-bright);
+      text-transform: uppercase;
+    }
+
+    .scan-result-type-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 4px;
+      background: rgba(204,26,26,0.15);
+      border: 1px solid var(--red-dim);
+      color: var(--red-bright);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .scan-result-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+
+    .scan-result-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .scan-result-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--white);
+      word-break: break-all;
+      line-height: 1.7;
+    }
+
+    .scan-result-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .result-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border-bright);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .result-action-btn:hover { border-color: var(--red-bright); color: var(--red-bright); background: rgba(204,26,26,0.08); }
+
+    .scan-error {
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: rgba(255,51,51,0.07);
+      border: 1px solid rgba(255,51,51,0.2);
+      border-radius: 8px;
+      color: var(--danger);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.78rem;
+      display: none;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 40px 20px 28px;
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+    }
+    footer a { color: var(--red); text-decoration: none; }
+    footer a:hover { color: var(--red-bright); }
+
+    /* ── TOAST ── */
+    .copied-toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--red);
+      color: var(--white);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 3px;
+      padding: 12px 26px;
+      border-radius: 6px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 999;
+      box-shadow: 0 4px 20px rgba(204,26,26,0.4);
+    }
     .copied-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    @media (max-width: 520px) { .options-grid { grid-template-columns: 1fr 1fr; } .card { padding: 24px; } }
-    .scan-result-type { display: inline-block; padding: 4px 12px; border-radius: 100px; background: rgba(0,176,255,0.12); color: var(--accent2); font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(204,26,26,0.4); }
+      50% { box-shadow: 0 0 0 10px rgba(204,26,26,0); }
+    }
+    .generating { animation: pulse 0.8s ease; }
+
+    @media (max-width: 520px) {
+      .options-grid { grid-template-columns: 1fr 1fr; }
+      .card { padding: 22px; }
+      nav { padding: 14px 16px; }
+    }
   </style>
 </head>
 <body>
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
 
+  <!-- Nav -->
   <nav>
+    <a href="https://yallcode.github.io/YallCode/" target="_blank" rel="noopener" class="nav-logo">
+      <img src="icon.png" alt="YallCode logo" />
+      <span class="nav-logo-text">QRcraft</span>
+    </a>
     <a href="https://yallcode.github.io/YallCode/" target="_blank" rel="noopener" class="yallcode-btn">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-      YallCode
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      YallCode.io
     </a>
   </nav>
 
+  <!-- Header -->
   <header>
-    <p class="logo-tag">// QRcraft</p>
-    <h1>QR Code Generator</h1>
-    <p class="subtitle">Generate and scan QR codes instantly, right in your browser.</p>
+    <p class="logo-tag">// QRcraft v2</p>
+    <h1>QR CODE<br><span>GENERATOR</span></h1>
+    <p class="subtitle">Generate &amp; scan QR codes — instantly, in your browser.</p>
   </header>
 
+  <!-- Tabs -->
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-generate" onclick="switchTab('generate')">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h3v-3h-3"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h3v-3h-3"/></svg>
       Generate
     </button>
     <button class="tab-btn" id="tab-scan" onclick="switchTab('scan')">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 23 1 18 1"/><line x1="23" y1="1" x2="16" y2="8"/><polyline points="1 6 1 1 6 1"/><line x1="1" y1="1" x2="8" y2="8"/><polyline points="23 18 23 23 18 23"/><line x1="23" y1="23" x2="16" y2="16"/><polyline points="1 18 1 23 6 23"/><line x1="1" y1="23" x2="8" y2="16"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 23 1 18 1"/><line x1="23" y1="1" x2="16" y2="8"/><polyline points="1 6 1 1 6 1"/><line x1="1" y1="1" x2="8" y2="8"/><polyline points="23 18 23 23 18 23"/><line x1="23" y1="23" x2="16" y2="16"/><polyline points="1 18 1 23 6 23"/><line x1="1" y1="23" x2="8" y2="16"/></svg>
       Scan
     </button>
   </div>
 
+  <!-- Card -->
   <div class="card">
+
+    <!-- GENERATE PANEL -->
     <div class="tab-panel active" id="panel-generate">
       <div class="input-wrap">
         <label for="qr-input">URL or Text</label>
-        <input type="text" id="qr-input" placeholder="https://yoursite.com or any text..." autocomplete="off" />
+        <input type="text" id="qr-input" placeholder="https://yallcode.github.io or any text..." autocomplete="off" />
         <button class="clear-btn" id="clear-btn" title="Clear">&#10005;</button>
       </div>
-      <p class="error-msg" id="error-msg">Please enter some text or a URL.</p>
+      <p class="error-msg" id="error-msg">Please enter some text or a URL first.</p>
       <div class="options-grid">
         <div>
           <label for="qr-size">Size</label>
@@ -143,8 +707,9 @@
       <button class="generate-btn" id="generate-btn">Generate QR Code</button>
     </div>
 
+    <!-- SCAN PANEL -->
     <div class="tab-panel" id="panel-scan">
-      <p style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:18px;">Choose scan method</p>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;">Choose scan method</p>
       <div class="scan-methods">
         <button class="scan-method-btn" id="method-upload-btn" onclick="setScanMethod('upload')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -152,174 +717,236 @@
         </button>
         <button class="scan-method-btn" id="method-camera-btn" onclick="setScanMethod('camera')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          Camera
+          Use Camera
         </button>
       </div>
+
+      <!-- Drop zone -->
       <div class="drop-zone" id="drop-zone">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h3v-3h-3"/></svg>
-        <p>Drop a QR code image here, or <span id="browse-link">browse</span></p>
-        <p style="margin-top:6px;font-size:10px;">PNG, JPG, WEBP supported</p>
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h3v-3h-3"/></svg>
+        <p>Drop a QR code image here, or <span id="browse-link">browse files</span></p>
+        <p style="margin-top:6px;font-size:9px;letter-spacing:2px;">PNG &bull; JPG &bull; WEBP</p>
         <input type="file" id="scan-file-input" accept="image/*" />
       </div>
+
+      <!-- Camera -->
       <div class="camera-wrap" id="camera-wrap">
         <video id="camera-video" autoplay playsinline muted></video>
         <canvas id="camera-canvas" style="display:none;"></canvas>
         <button class="cam-btn" onclick="stopCamera();document.getElementById('camera-wrap').classList.remove('visible');">Stop Camera</button>
-        <p style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;">POINT AT A QR CODE TO SCAN</p>
+        <p style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-align:center;">POINT CAMERA AT QR CODE</p>
       </div>
-      <div class="scan-result" id="scan-result">
-  <p class="scan-result-tag">&#10003; QR Code Decoded</p>
-  <div class="scan-result-type" id="scan-result-type"></div>
-  <p class="scan-result-text" id="scan-result-text"></p>
-  <div class="scan-result-actions" id="scan-result-actions"></div>
-</div>
 
+      <!-- Scan Result -->
+      <div class="scan-result" id="scan-result">
+        <div class="scan-result-header">
+          <div class="scan-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span class="scan-result-tag">QR Code Decoded</span>
+        </div>
+        <div class="scan-result-type-badge" id="scan-result-type">Plain Text</div>
+        <div class="scan-result-box">
+          <p class="scan-result-label">Content</p>
+          <p class="scan-result-text" id="scan-result-text"></p>
+        </div>
+        <div class="scan-result-actions" id="scan-result-actions"></div>
+      </div>
+
+      <div class="scan-error" id="scan-error">No QR code detected. Try a clearer, well-lit image.</div>
+    </div>
+  </div>
+
+  <!-- QR Output -->
   <div class="qr-section" id="qr-section">
     <div class="qr-frame">
-      <div id="qr-output"><p class="empty-state">Your QR code will appear here</p></div>
+      <div id="qr-output"><p class="empty-state">// QR CODE APPEARS HERE</p></div>
       <p class="qr-label" id="qr-label"></p>
       <a class="download-btn" id="download-btn" style="display:none;" download="qrcode.png">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Download PNG
       </a>
     </div>
   </div>
 
-  <footer>QRCRAFT - BY <a href="https://yallcode.github.io/YallCode/" target="_blank" rel="noopener">YALLCODE</a></footer>
+  <footer>QRCRAFT &mdash; BY <a href="https://yallcode.github.io/YallCode/" target="_blank" rel="noopener">YALLCODE</a></footer>
   <div class="copied-toast" id="copied-toast">COPIED!</div>
 
   <script>
+    /* ── TABS ── */
     function switchTab(tab) {
-      document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
-      document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+      document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
       document.getElementById('tab-'+tab).classList.add('active');
       document.getElementById('panel-'+tab).classList.add('active');
-      var qs=document.getElementById('qr-section');
-      if(tab==='scan'){qs.style.display='none';stopCamera();}else{qs.style.display='';}
+      var qs = document.getElementById('qr-section');
+      if (tab === 'scan') { qs.style.display = 'none'; stopCamera(); } else { qs.style.display = ''; }
     }
-    var input=document.getElementById('qr-input');
-    document.getElementById('clear-btn').addEventListener('click',function(){input.value='';input.focus();});
-    input.addEventListener('keydown',function(e){if(e.key==='Enter')generateQR();});
-    document.getElementById('generate-btn').addEventListener('click',generateQR);
-    var qrInstance=null;
-    function generateQR(){
-      var text=input.value.trim();
-      var errEl=document.getElementById('error-msg');
-      if(!text){errEl.style.display='block';input.focus();return;}
-      errEl.style.display='none';
-      var size=parseInt(document.getElementById('qr-size').value);
-      var fg=document.getElementById('qr-fg').value;
-      var bg=document.getElementById('qr-bg').value;
-      var qrOut=document.getElementById('qr-output');
-      qrOut.innerHTML='';
-      if(qrInstance){qrInstance.clear();qrInstance=null;}
-      qrInstance=new QRCode(qrOut,{text:text,width:size,height:size,colorDark:fg,colorLight:bg,correctLevel:QRCode.CorrectLevel.H});
-      var qs=document.getElementById('qr-section');
+
+    /* ── GENERATE ── */
+    var input = document.getElementById('qr-input');
+    document.getElementById('clear-btn').addEventListener('click', function(){ input.value=''; input.focus(); });
+    input.addEventListener('keydown', function(e){ if(e.key==='Enter') generateQR(); });
+    document.getElementById('generate-btn').addEventListener('click', generateQR);
+    var qrInstance = null;
+
+    function generateQR() {
+      var text = input.value.trim();
+      var errEl = document.getElementById('error-msg');
+      if (!text) { errEl.style.display='block'; input.focus(); return; }
+      errEl.style.display = 'none';
+      var size = parseInt(document.getElementById('qr-size').value);
+      var fg = document.getElementById('qr-fg').value;
+      var bg = document.getElementById('qr-bg').value;
+      var qrOut = document.getElementById('qr-output');
+      qrOut.innerHTML = '';
+      if (qrInstance) { qrInstance.clear(); qrInstance = null; }
+      qrInstance = new QRCode(qrOut, { text:text, width:size, height:size, colorDark:fg, colorLight:bg, correctLevel:QRCode.CorrectLevel.H });
+      var qs = document.getElementById('qr-section');
       qs.classList.add('visible');
-      var gb=document.getElementById('generate-btn');
+      var gb = document.getElementById('generate-btn');
       gb.classList.add('generating');
-      setTimeout(function(){gb.classList.remove('generating');},800);
-      document.getElementById('qr-label').textContent=text.length>40?text.slice(0,37)+'...':text;
+      setTimeout(function(){ gb.classList.remove('generating'); }, 800);
+      document.getElementById('qr-label').textContent = text.length > 40 ? text.slice(0,37)+'...' : text;
       setTimeout(function(){
-        var c=qrOut.querySelector('canvas');
-        if(c){var dl=document.getElementById('download-btn');dl.href=c.toDataURL('image/png');dl.style.display='flex';}
-      },200);
-      setTimeout(function(){qs.scrollIntoView({behavior:'smooth',block:'center'});},100);
+        var c = qrOut.querySelector('canvas');
+        if (c) { var dl=document.getElementById('download-btn'); dl.href=c.toDataURL('image/png'); dl.style.display='flex'; }
+      }, 200);
+      setTimeout(function(){ qs.scrollIntoView({behavior:'smooth',block:'center'}); }, 100);
     }
+
     ['qr-fg','qr-bg','qr-size'].forEach(function(id){
-      document.getElementById(id).addEventListener('change',function(){if(input.value.trim())generateQR();});
+      document.getElementById(id).addEventListener('change', function(){ if(input.value.trim()) generateQR(); });
     });
 
+    /* ── SCAN RESULT ── */
     function showScanResult(text) {
-  var re = document.getElementById('scan-result');
-  var typeEl = document.getElementById('scan-result-type');
-  document.getElementById('scan-result-text').textContent = text;
-  document.getElementById('scan-error').style.display = 'none';
+      var re = document.getElementById('scan-result');
+      var textEl = document.getElementById('scan-result-text');
+      var typeEl = document.getElementById('scan-result-type');
+      var ae = document.getElementById('scan-result-actions');
+      document.getElementById('scan-error').style.display = 'none';
 
-  // Detect type
-  var isURL = false;
-  try {
-    var u = new URL(text);
-    if (u.protocol === 'http:' || u.protocol === 'https:') { isURL = true; }
-  } catch(e) {}
-  typeEl.textContent = isURL ? 'URL / Link' : 'Plain Text';
+      textEl.textContent = text;
+      ae.innerHTML = '';
 
-  var ae = document.getElementById('scan-result-actions');
-  ae.innerHTML = '';
+      // Detect type
+      var isURL = false, isEmail = false, isPhone = false;
+      try {
+        var u = new URL(text);
+        if (u.protocol==='http:' || u.protocol==='https:') isURL = true;
+      } catch(e){}
+      if (!isURL && /^mailto:/i.test(text)) isEmail = true;
+      if (!isURL && !isEmail && /^tel:/i.test(text)) isPhone = true;
 
-  var cb = document.createElement('button');
-  cb.className = 'result-action-btn';
-  cb.textContent = 'Copy';
-  cb.onclick = function() { navigator.clipboard.writeText(text).then(showToast); };
-  ae.appendChild(cb);
+      if (isURL) typeEl.textContent = 'URL / Link';
+      else if (isEmail) typeEl.textContent = 'Email';
+      else if (isPhone) typeEl.textContent = 'Phone Number';
+      else typeEl.textContent = 'Plain Text';
 
-  if (isURL) {
-    var ob = document.createElement('a');
-    ob.className = 'result-action-btn';
-    ob.href = text; ob.target = '_blank'; ob.rel = 'noopener noreferrer';
-    ob.textContent = 'Open Link';
-    ae.appendChild(ob);
-  }
+      // Copy button
+      var cb = document.createElement('button');
+      cb.className = 'result-action-btn';
+      cb.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy';
+      cb.onclick = function(){ navigator.clipboard.writeText(text).then(showToast); };
+      ae.appendChild(cb);
 
-  re.classList.add('visible');
-  re.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-    function showScanError(){
-      document.getElementById('scan-result').classList.remove('visible');
-      document.getElementById('scan-error').style.display='block';
+      // Open link
+      if (isURL) {
+        var ob = document.createElement('a');
+        ob.className = 'result-action-btn';
+        ob.href = text; ob.target = '_blank'; ob.rel = 'noopener noreferrer';
+        ob.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Open Link';
+        ae.appendChild(ob);
+      }
+
+      re.classList.add('visible');
+      setTimeout(function(){ re.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 100);
     }
-    function setScanMethod(method){
-      document.getElementById('method-upload-btn').classList.toggle('active',method==='upload');
-      document.getElementById('method-camera-btn').classList.toggle('active',method==='camera');
-      document.getElementById('drop-zone').classList.toggle('visible',method==='upload');
-      document.getElementById('camera-wrap').classList.toggle('visible',method==='camera');
+
+    function showScanError() {
       document.getElementById('scan-result').classList.remove('visible');
-      document.getElementById('scan-error').style.display='none';
-      if(method==='camera')startCamera();else stopCamera();
+      document.getElementById('scan-error').style.display = 'block';
     }
-    var fi=document.getElementById('scan-file-input');
-    var dz=document.getElementById('drop-zone');
-    document.getElementById('browse-link').addEventListener('click',function(){fi.click();});
-    dz.addEventListener('click',function(){fi.click();});
-    dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('drag-over');});
-    dz.addEventListener('dragleave',function(){dz.classList.remove('drag-over');});
-    dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('drag-over');if(e.dataTransfer.files[0])decodeFromFile(e.dataTransfer.files[0]);});
-    fi.addEventListener('change',function(){if(fi.files[0])decodeFromFile(fi.files[0]);});
-    function decodeFromFile(file){
-      var img=new Image();var url=URL.createObjectURL(file);
-      img.onload=function(){
-        var canvas=document.createElement('canvas');
-        canvas.width=img.width;canvas.height=img.height;
-        var ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
-        var id=ctx.getImageData(0,0,canvas.width,canvas.height);
-        var code=jsQR(id.data,id.width,id.height);
+
+    /* ── SCAN METHODS ── */
+    function setScanMethod(method) {
+      document.getElementById('method-upload-btn').classList.toggle('active', method==='upload');
+      document.getElementById('method-camera-btn').classList.toggle('active', method==='camera');
+      document.getElementById('drop-zone').classList.toggle('visible', method==='upload');
+      document.getElementById('camera-wrap').classList.toggle('visible', method==='camera');
+      document.getElementById('scan-result').classList.remove('visible');
+      document.getElementById('scan-error').style.display = 'none';
+      if (method==='camera') startCamera(); else stopCamera();
+    }
+
+    /* ── UPLOAD ── */
+    var fi = document.getElementById('scan-file-input');
+    var dz = document.getElementById('drop-zone');
+    document.getElementById('browse-link').addEventListener('click', function(){ fi.click(); });
+    dz.addEventListener('click', function(){ fi.click(); });
+    dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', function(){ dz.classList.remove('drag-over'); });
+    dz.addEventListener('drop', function(e){ e.preventDefault(); dz.classList.remove('drag-over'); if(e.dataTransfer.files[0]) decodeFromFile(e.dataTransfer.files[0]); });
+    fi.addEventListener('change', function(){ if(fi.files[0]) decodeFromFile(fi.files[0]); });
+
+    function decodeFromFile(file) {
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function() {
+        var canvas = document.createElement('canvas');
+        canvas.width = img.width; canvas.height = img.height;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        var id = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var code = jsQR(id.data, id.width, id.height);
         URL.revokeObjectURL(url);
-        if(code)showScanResult(code.data);else showScanError();
-      };img.src=url;
+        if (code) showScanResult(code.data); else showScanError();
+      };
+      img.src = url;
     }
-    var camStream=null,scanIv=null;
-    async function startCamera(){
-      try{
-        camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-        var v=document.getElementById('camera-video');v.srcObject=camStream;await v.play();
-        scanIv=setInterval(scanFrame,350);
-      }catch(e){alert('Camera unavailable. Use Upload instead.');setScanMethod('upload');}
+
+    /* ── CAMERA ── */
+    var camStream = null, scanIv = null;
+
+    async function startCamera() {
+      try {
+        camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        var v = document.getElementById('camera-video');
+        v.srcObject = camStream; await v.play();
+        scanIv = setInterval(scanFrame, 350);
+      } catch(e) {
+        alert('Camera unavailable or permission denied. Use Upload instead.');
+        setScanMethod('upload');
+      }
     }
-    function stopCamera(){
-      if(scanIv){clearInterval(scanIv);scanIv=null;}
-      if(camStream){camStream.getTracks().forEach(function(t){t.stop();});camStream=null;}
-      var v=document.getElementById('camera-video');if(v)v.srcObject=null;
+
+    function stopCamera() {
+      if (scanIv) { clearInterval(scanIv); scanIv = null; }
+      if (camStream) { camStream.getTracks().forEach(function(t){ t.stop(); }); camStream = null; }
+      var v = document.getElementById('camera-video');
+      if (v) v.srcObject = null;
     }
-    function scanFrame(){
-      var v=document.getElementById('camera-video');if(!v||!v.videoWidth)return;
-      var c=document.getElementById('camera-canvas');c.width=v.videoWidth;c.height=v.videoHeight;
-      var ctx=c.getContext('2d');ctx.drawImage(v,0,0);
-      var code=jsQR(ctx.getImageData(0,0,c.width,c.height).data,c.width,c.height);
-      if(code){stopCamera();document.getElementById('camera-wrap').classList.remove('visible');showScanResult(code.data);}
+
+    function scanFrame() {
+      var v = document.getElementById('camera-video');
+      if (!v || !v.videoWidth) return;
+      var c = document.getElementById('camera-canvas');
+      c.width = v.videoWidth; c.height = v.videoHeight;
+      var ctx = c.getContext('2d'); ctx.drawImage(v, 0, 0);
+      var code = jsQR(ctx.getImageData(0, 0, c.width, c.height).data, c.width, c.height);
+      if (code) {
+        stopCamera();
+        document.getElementById('camera-wrap').classList.remove('visible');
+        showScanResult(code.data);
+      }
     }
-    function showToast(){
-      var t=document.getElementById('copied-toast');t.classList.add('show');
-      setTimeout(function(){t.classList.remove('show');},2000);
+
+    /* ── TOAST ── */
+    function showToast() {
+      var t = document.getElementById('copied-toast');
+      t.classList.add('show');
+      setTimeout(function(){ t.classList.remove('show'); }, 2000);
     }
   </script>
 </body>
