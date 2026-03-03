@@ -1,1 +1,1 @@
-https://yallcode.github.io/QR-Code-Generator/
+[SiteLink](https://yallcode.github.io/QR-Code-Generator/)
