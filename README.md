@@ -1,0 +1,1 @@
+https://yallcode.github.io/QR-Code-Generator/
